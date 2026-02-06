@@ -11,8 +11,16 @@
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
         }
-        .aspect-16-9 {
+        /* Ensure the container is exactly white with no transitions */
+        .img-container {
             aspect-ratio: 16 / 9;
+            background-color: #ffffff !important;
+        }
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
     </style>
     <script type="importmap">
@@ -35,12 +43,7 @@
 
         const html = htm.bind(React.createElement);
 
-        // --- Types & Constants ---
-        const QuizMode = {
-            MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
-            TYPE_ANSWER: 'TYPE_ANSWER'
-        };
-
+        // --- Data ---
         const BRODMANN_AREAS = [
             { id: '1', number: '1', lobe: 'Parietal', name: 'Primary somatosensory cortex (S1, area 1)', functions: 'Touch, proprioception, somatosensory processing' },
             { id: '2', number: '2', lobe: 'Parietal', name: 'Primary somatosensory cortex (S1, area 2)', functions: 'Touch, proprioception, somatosensory processing' },
@@ -49,8 +52,6 @@
             { id: '5', number: '5', lobe: 'Parietal', name: 'Somatosensory association cortex', functions: 'Integration of sensory information, spatial perception' },
             { id: '6', number: '6', lobe: 'Frontal', name: 'Premotor cortex / Supplementary motor area', functions: 'Planning and coordination of movement' },
             { id: '7', number: '7', lobe: 'Parietal', name: 'Superior parietal lobule', functions: 'Visuomotor integration, spatial orientation' },
-            { id: '7A', number: '7A', lobe: 'Parietal', name: 'Superior parietal subdivision', functions: 'Higher-order spatial processing' },
-            { id: '7B', number: '7B', lobe: 'Parietal', name: 'Inferior parietal subdivision', functions: 'Integration of sensory and motor info' },
             { id: '8', number: '8', lobe: 'Frontal', name: 'Frontal eye fields', functions: 'Voluntary eye movement control' },
             { id: '9', number: '9', lobe: 'Frontal', name: 'Dorsolateral prefrontal cortex', functions: 'Executive function, working memory, planning' },
             { id: '10', number: '10', lobe: 'Frontal', name: 'Frontopolar prefrontal cortex', functions: 'Strategic planning, complex cognition' },
@@ -65,17 +66,6 @@
             { id: '23', number: '23', lobe: 'Limbic / Cingulate', name: 'Ventral posterior cingulate cortex', functions: 'Emotion, memory, attention' },
             { id: '24', number: '24', lobe: 'Limbic / Cingulate', name: 'Anterior cingulate cortex', functions: 'Emotion regulation, decision-making, autonomic function' },
             { id: '25', number: '25', lobe: 'Limbic / Cingulate', name: 'Subgenual / ventromedial area', functions: 'Emotion, mood regulation' },
-            { id: '26', number: '26', lobe: 'Limbic / Cingulate', name: 'Ectosplenial cortex', functions: 'Limbic integration, spatial memory' },
-            { id: '27', number: '27', lobe: 'Limbic / Cingulate', name: 'Presubiculum', functions: 'Spatial memory, navigation' },
-            { id: '28', number: '28', lobe: 'Limbic / Temporal', name: 'Entorhinal cortex', functions: 'Memory, olfaction, navigation' },
-            { id: '29', number: '29', lobe: 'Limbic / Cingulate', name: 'Retrosplenial cortex', functions: 'Memory, spatial orientation' },
-            { id: '30', number: '30', lobe: 'Limbic / Cingulate', name: 'Retrosplenial cortex', functions: 'Memory, spatial orientation' },
-            { id: '31', number: '31', lobe: 'Limbic / Cingulate', name: 'Dorsal posterior cingulate cortex', functions: 'Attention, memory, visuospatial orientation' },
-            { id: '32', number: '32', lobe: 'Limbic / Cingulate', name: 'Dorsal anterior cingulate cortex', functions: 'Cognitive control, conflict monitoring' },
-            { id: '33', number: '33', lobe: 'Limbic / Cingulate', name: 'Anterior cingulate / supplementary area', functions: 'Motor planning, emotion, autonomic control' },
-            { id: '34', number: '34', lobe: 'Limbic / Temporal', name: 'Dorsal entorhinal cortex / uncus', functions: 'Memory encoding, olfaction' },
-            { id: '35', number: '35', lobe: 'Limbic / Temporal', name: 'Perirhinal cortex', functions: 'Object recognition, memory' },
-            { id: '36', number: '36', lobe: 'Limbic / Temporal', name: 'Ectorhinal cortex', functions: 'Memory, visual recognition' },
             { id: '37', number: '37', lobe: 'Temporal', name: 'Fusiform gyrus', functions: 'Face, word, and high-level visual recognition' },
             { id: '38', number: '38', lobe: 'Temporal', name: 'Temporal pole', functions: 'Social cognition, emotion, auditory processing' },
             { id: '39', number: '39', lobe: 'Parietal', name: 'Angular gyrus', functions: 'Language, number processing, reading, spatial cognition' },
@@ -86,368 +76,198 @@
             { id: '44', number: '44', lobe: 'Frontal', name: 'Broca’s area pars opercularis', functions: 'Speech production, language processing' },
             { id: '45', number: '45', lobe: 'Frontal', name: 'Broca’s area pars triangularis', functions: 'Language, semantic processing' },
             { id: '46', number: '46', lobe: 'Frontal', name: 'Dorsolateral prefrontal cortex', functions: 'Executive function, working memory, planning' },
-            { id: '47', number: '47', lobe: 'Frontal', name: 'Inferior frontal gyrus (ventrolateral PFC)', functions: 'Language, semantic processing, decision-making' },
-            { id: '52', number: '52', lobe: 'Insula / Temporal', name: 'Parainsular area', functions: 'Insula–temporal transition zone, multisensory integration' },
+            { id: '47', number: '47', lobe: 'Frontal', name: 'Inferior frontal gyrus (ventrolateral PFC)', functions: 'Language, semantic processing, decision-making' }
         ];
+
+        const QuizMode = { MULTIPLE_CHOICE: 'MCQ', TYPE_ANSWER: 'TYPE' };
+
+        // --- Static Image Component ---
+        // We define the image source once. 
+        // No loading states or conditional renders here to prevent the browser from flickering the DOM.
+        const BrainImage = React.memo(() => html`
+            <div className="img-container w-full relative border-b border-slate-100">
+                <img 
+                    src="image1.png" 
+                    alt="Brodmann Areas Reference"
+                    loading="eager"
+                />
+            </div>
+        `);
 
         // --- Utils ---
         const shuffleArray = (array) => [...array].sort(() => 0.5 - Math.random());
-        
-        const getRandomOptions = (correctValue, allValues, count = 4) => {
-            const uniqueValues = Array.from(new Set(allValues.filter(v => v !== correctValue)));
-            const shuffled = uniqueValues.sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, count - 1);
-            return [...selected, correctValue].sort(() => 0.5 - Math.random());
+        const getRandomOptions = (correct, all, count = 4) => {
+            const others = Array.from(new Set(all.filter(v => v !== correct))).sort(() => 0.5 - Math.random());
+            return [...others.slice(0, count - 1), correct].sort(() => 0.5 - Math.random());
         };
 
-        const validateTypeAnswer = (userInput, actualValue) => {
-            if (!userInput) return false;
-            const getKeywords = (str) => 
-                str.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length >= 3);
-            const userWords = getKeywords(userInput);
-            const actualWords = getKeywords(actualValue);
-            const matchingWords = userWords.filter(word => actualWords.includes(word));
-            if (actualWords.length <= 2) return matchingWords.length >= 1;
-            return matchingWords.length >= 2 || matchingWords.length / actualWords.length >= 0.5;
+        const validateTypeAnswer = (user, actual) => {
+            if (!user) return false;
+            const clean = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const userC = clean(user);
+            const actualC = clean(actual);
+            return actualC.includes(userC) || userC.includes(actualC) || (userC.length > 4 && actualC.startsWith(userC.substring(0, 4)));
         };
 
-        // --- UI Components ---
+        // --- Subcomponents ---
         const StatusBadge = ({ correct, label }) => html`
             <span className=${`px-2 py-1 rounded text-[10px] font-bold uppercase ${correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 ${label} ${correct ? '✓' : '✗'}
             </span>
         `;
 
-        const ResultIcon = ({ isCorrect, label }) => html`
-            <div className="flex flex-col items-center gap-1">
-                <div className=${`w-10 h-10 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-                    ${isCorrect 
-                        ? html`<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>`
-                        : html`<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>`
-                    }
-                </div>
-                <span className="text-[10px] uppercase font-black tracking-widest">${label}</span>
-            </div>
-        `;
-
-        const OptionButton = ({ label, isSelected, onClick, disabled }) => html`
-            <button 
-                onClick=${onClick}
-                disabled=${disabled}
-                className=${`p-4 text-left rounded-xl border-2 transition-all font-medium text-sm leading-snug h-full flex items-center ${
-                    isSelected 
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-md ring-2 ring-indigo-200' 
-                        : 'border-slate-100 bg-white hover:border-indigo-300 text-slate-600'
-                } ${disabled ? 'opacity-80 cursor-default' : 'cursor-pointer hover:-translate-y-0.5'}`}
-            >
-                ${label}
-            </button>
-        `;
-
-        const TypeInput = ({ value, onChange, placeholder, disabled }) => html`
-            <input 
-                type="text"
-                value=${value}
-                onChange=${(e) => onChange(e.target.value)}
-                placeholder=${placeholder}
-                disabled=${disabled}
-                className="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all outline-none text-slate-800 font-medium"
-            />
-        `;
-
-        // Image Placeholder Component using local image1.png
-        // Removed transitions and dark backgrounds to prevent flashing
-        const ImagePlaceholder = () => {
-            const [hasError, setHasError] = React.useState(false);
-            
-            return html`
-                <div className="w-full bg-white aspect-16-9 relative flex items-center justify-center overflow-hidden border-b border-slate-100">
-                    ${hasError ? html`
-                        <div className="text-slate-400 text-xs text-center p-4">
-                            <p className="font-bold">image1.png not found</p>
-                            <p>Verify the file is in your local directory.</p>
-                        </div>
-                    ` : html`
-                        <img 
-                            id="image1"
-                            src="image1.png"
-                            className="w-full h-full object-contain"
-                            onError=${() => setHasError(true)}
-                            alt="Anatomical Figure"
-                        />
-                    `}
-                </div>
-            `;
-        };
-
-        // --- Main App ---
         const App = () => {
             const [quizMode, setQuizMode] = useState(null);
             const [currentIndex, setCurrentIndex] = useState(0);
-            const [results, setResults] = useState([]);
             const [shuffledAreas, setShuffledAreas] = useState([]);
             const [currentAnswer, setCurrentAnswer] = useState({ lobe: '', name: '', functions: '' });
-            const [isFinished, setIsFinished] = useState(false);
-            const [feedback, setFeedback] = useState({ show: false, result: null });
+            const [results, setResults] = useState([]);
+            const [feedback, setFeedback] = useState(null);
 
             const startQuiz = (mode) => {
-                setQuizMode(mode);
                 setShuffledAreas(shuffleArray(BRODMANN_AREAS));
+                setQuizMode(mode);
                 setCurrentIndex(0);
                 setResults([]);
-                setIsFinished(false);
-                setFeedback({ show: false, result: null });
+                setFeedback(null);
                 setCurrentAnswer({ lobe: '', name: '', functions: '' });
             };
 
             const currentArea = shuffledAreas[currentIndex];
 
-            const mcqOptions = useMemo(() => {
+            const options = useMemo(() => {
                 if (!currentArea || quizMode !== QuizMode.MULTIPLE_CHOICE) return null;
                 return {
                     lobe: getRandomOptions(currentArea.lobe, BRODMANN_AREAS.map(a => a.lobe)),
                     name: getRandomOptions(currentArea.name, BRODMANN_AREAS.map(a => a.name)),
-                    functions: getRandomOptions(currentArea.functions, BRODMANN_AREAS.map(a => a.functions)),
+                    functions: getRandomOptions(currentArea.functions, BRODMANN_AREAS.map(a => a.functions))
                 };
             }, [currentArea, quizMode]);
 
             const handleSubmit = () => {
-                const lobeCorrect = quizMode === QuizMode.MULTIPLE_CHOICE 
-                    ? currentAnswer.lobe === currentArea.lobe 
-                    : validateTypeAnswer(currentAnswer.lobe, currentArea.lobe);
-                
-                const nameCorrect = quizMode === QuizMode.MULTIPLE_CHOICE 
-                    ? currentAnswer.name === currentArea.name 
-                    : validateTypeAnswer(currentAnswer.name, currentArea.name);
-                
-                const functionsCorrect = quizMode === QuizMode.MULTIPLE_CHOICE 
-                    ? currentAnswer.functions === currentArea.functions 
-                    : validateTypeAnswer(currentAnswer.functions, currentArea.functions);
+                const isLobe = quizMode === QuizMode.MULTIPLE_CHOICE ? currentAnswer.lobe === currentArea.lobe : validateTypeAnswer(currentAnswer.lobe, currentArea.lobe);
+                const isName = quizMode === QuizMode.MULTIPLE_CHOICE ? currentAnswer.name === currentArea.name : validateTypeAnswer(currentAnswer.name, currentArea.name);
+                const isFunc = quizMode === QuizMode.MULTIPLE_CHOICE ? currentAnswer.functions === currentArea.functions : validateTypeAnswer(currentAnswer.functions, currentArea.functions);
 
-                const result = {
-                    areaId: currentArea.id,
-                    lobeCorrect,
-                    nameCorrect,
-                    functionsCorrect,
-                    userAnswer: { ...currentAnswer }
-                };
-
-                setResults([...results, result]);
-                setFeedback({ show: true, result });
+                const res = { areaId: currentArea.id, lobeCorrect: isLobe, nameCorrect: isName, functionsCorrect: isFunc };
+                setResults(prev => [...prev, res]);
+                setFeedback(res);
             };
 
-            const nextQuestion = () => {
-                setFeedback({ show: false, result: null });
+            const next = () => {
+                setFeedback(null);
                 setCurrentAnswer({ lobe: '', name: '', functions: '' });
-                if (currentIndex < shuffledAreas.length - 1) {
-                    setCurrentIndex(currentIndex + 1);
-                } else {
-                    setIsFinished(true);
-                }
+                if (currentIndex < shuffledAreas.length - 1) setCurrentIndex(v => v + 1);
+                else setQuizMode('FINISHED');
             };
 
             if (!quizMode) {
                 return html`
-                    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
-                        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl overflow-hidden">
-                            <div className="bg-indigo-600 p-8 text-white text-center">
-                                <h1 className="text-4xl font-extrabold mb-2 tracking-tight">NeuroQuiz Master</h1>
-                                <p className="text-indigo-100 text-lg">Brodmann's Areas Neuroanatomy Challenge</p>
-                            </div>
-                            <div className="p-10 space-y-8">
-                                <p className="text-gray-600 text-center leading-relaxed">
-                                    Test your knowledge of the human cerebral cortex. Master all 52 functional regions 
-                                    identified by Korbinian Brodmann through rigorous testing.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <button 
-                                        onClick=${() => startQuiz(QuizMode.MULTIPLE_CHOICE)}
-                                        className="group flex flex-col items-center p-8 bg-white border-2 border-indigo-100 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-300 transform hover:-translate-y-1"
-                                    >
-                                        <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                        <span className="font-bold text-gray-800 text-xl">Multiple Choice</span>
-                                        <span className="text-sm text-gray-500 mt-2 text-center">Choose the correct answer from the list</span>
-                                    </button>
-                                    <button 
-                                        onClick=${() => startQuiz(QuizMode.TYPE_ANSWER)}
-                                        className="group flex flex-col items-center p-8 bg-white border-2 border-indigo-100 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-300 transform hover:-translate-y-1"
-                                    >
-                                        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                        </div>
-                                        <span className="font-bold text-gray-800 text-xl">Type Answer</span>
-                                        <span className="text-sm text-gray-500 mt-2 text-center">Recall and type the definitions</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (isFinished) {
-                const totalCorrect = results.reduce((acc, curr) => 
-                    acc + (curr.lobeCorrect ? 1 : 0) + (curr.nameCorrect ? 1 : 0) + (curr.functionsCorrect ? 1 : 0), 0);
-                const maxScore = results.length * 3;
-                const percentage = Math.round((totalCorrect / maxScore) * 100);
-
-                return html`
-                    <div className="min-h-screen p-6 bg-slate-50 flex flex-col items-center">
-                        <div className="max-w-4xl w-full">
-                            <div className="bg-white rounded-2xl shadow-xl p-10 text-center mb-8">
-                                <h2 className="text-4xl font-extrabold text-gray-900 mb-4">Quiz Complete!</h2>
-                                <div className="text-6xl font-black text-indigo-600 mb-6">${percentage}%</div>
-                                <p className="text-xl text-gray-600 mb-10">You identified ${totalCorrect} out of ${maxScore} attributes correctly.</p>
-                                <button 
-                                    onClick=${() => setQuizMode(null)}
-                                    className="bg-indigo-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-indigo-700 transition-all transform hover:scale-105 active:scale-95"
-                                >
-                                    Back to Menu
-                                </button>
-                            </div>
-
+                    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+                        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 text-center">
+                            <h1 className="text-3xl font-black text-slate-900 mb-2">Brodmann Explorer</h1>
+                            <p className="text-slate-500 mb-8">Master 52 cortical regions</p>
                             <div className="space-y-4">
-                                <h3 className="text-2xl font-bold text-gray-800 mb-6">Detailed Review</h3>
-                                ${results.map((res, i) => {
-                                    const area = BRODMANN_AREAS.find(a => a.id === res.areaId);
-                                    return html`
-                                        <div key=${res.areaId} className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <span className="text-lg font-bold text-indigo-600 uppercase tracking-wide">Brodmann Area ${area.number}</span>
-                                                <div className="flex gap-2">
-                                                    <${StatusBadge} correct=${res.lobeCorrect} label="Lobe" />
-                                                    <${StatusBadge} correct=${res.nameCorrect} label="Name" />
-                                                    <${StatusBadge} correct=${res.functionsCorrect} label="Functions" />
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                                                <div>
-                                                    <p className="font-semibold text-gray-500 uppercase tracking-tighter mb-1">Lobe</p>
-                                                    <p className=${res.lobeCorrect ? "text-green-700" : "text-red-700"}>${area.lobe}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-500 uppercase tracking-tighter mb-1">Specific Name</p>
-                                                    <p className=${res.nameCorrect ? "text-green-700" : "text-red-700"}>${area.name}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold text-gray-500 uppercase tracking-tighter mb-1">Functions</p>
-                                                    <p className=${res.functionsCorrect ? "text-green-700" : "text-red-700"}>${area.functions}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                })}
+                                <button onClick=${() => startQuiz(QuizMode.MULTIPLE_CHOICE)} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-colors">Multiple Choice</button>
+                                <button onClick=${() => startQuiz(QuizMode.TYPE_ANSWER)} className="w-full py-4 border-2 border-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-colors">Recall Mode</button>
                             </div>
                         </div>
                     </div>
                 `;
             }
 
-            const progress = (currentIndex / shuffledAreas.length) * 100;
+            if (quizMode === 'FINISHED') {
+                return html`
+                    <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
+                        <div className="max-w-2xl w-full bg-white rounded-3xl shadow-xl p-10 text-center mb-6">
+                            <h2 className="text-3xl font-black mb-4">Quiz Complete</h2>
+                            <button onClick=${() => setQuizMode(null)} className="px-8 py-3 bg-indigo-600 text-white rounded-full font-bold">Restart</button>
+                        </div>
+                        <div className="max-w-2xl w-full space-y-3">
+                            ${results.map(r => html`
+                                <div className="bg-white p-4 rounded-xl flex justify-between items-center shadow-sm">
+                                    <span className="font-bold">Area ${BRODMANN_AREAS.find(a => a.id === r.areaId).number}</span>
+                                    <div className="flex gap-2">
+                                        <${StatusBadge} correct=${r.lobeCorrect} label="L" />
+                                        <${StatusBadge} correct=${r.nameCorrect} label="N" />
+                                        <${StatusBadge} correct=${r.functionsCorrect} label="F" />
+                                    </div>
+                                </div>
+                            `)}
+                        </div>
+                    </div>
+                `;
+            }
 
             return html`
-                <div className="min-h-screen bg-slate-50 py-12 px-4">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="mb-10 flex flex-col items-center">
-                            <div className="flex justify-between items-center w-full mb-4 px-2">
-                                <button onClick=${() => setQuizMode(null)} className="text-slate-400 hover:text-indigo-600 flex items-center gap-2 font-medium transition-colors">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                                    Back
-                                </button>
-                                <span className="text-slate-500 font-bold uppercase tracking-widest text-sm">
-                                    Question ${currentIndex + 1} of ${shuffledAreas.length}
-                                </span>
-                                <div className="w-10"></div>
-                            </div>
-                            <div className="w-full bg-slate-200 h-3 rounded-full overflow-hidden shadow-inner">
-                                <div 
-                                    className="bg-indigo-500 h-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]" 
-                                    style=${{ width: `${progress}%` }}
-                                ></div>
-                            </div>
-                        </div>
-
+                <div className="min-h-screen bg-slate-50 py-8 px-4 flex justify-center">
+                    <div className="max-w-3xl w-full">
                         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-                            <${ImagePlaceholder} />
+                            <!-- Image remains stable across renders -->
+                            <${BrainImage} />
 
-                            <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-8 text-center text-white relative">
-                                <h2 className="text-4xl font-black mb-1 drop-shadow-lg">Area ${currentArea.number}</h2>
-                                <p className="text-indigo-100 text-sm opacity-90 uppercase tracking-widest font-bold">Anatomical Identification</p>
+                            <div className="bg-indigo-600 p-6 text-center text-white">
+                                <h2 className="text-3xl font-black">Area ${currentArea.number}</h2>
+                                <p className="text-xs uppercase tracking-widest opacity-80 font-bold">Identification Challenge</p>
                             </div>
 
-                            <div className="p-8 md:p-12 space-y-10">
+                            <div className="p-8 space-y-8">
                                 <div>
-                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Lobe Location</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3">Lobe Location</label>
                                     ${quizMode === QuizMode.MULTIPLE_CHOICE 
-                                        ? html`<div className="grid grid-cols-2 gap-3">
-                                            ${mcqOptions.lobe.map(opt => html`<${OptionButton} key=${opt} label=${opt} isSelected=${currentAnswer.lobe === opt} onClick=${() => setCurrentAnswer({ ...currentAnswer, lobe: opt })} disabled=${feedback.show} />`)}
-                                          </div>`
-                                        : html`<${TypeInput} value=${currentAnswer.lobe} onChange=${(val) => setCurrentAnswer({ ...currentAnswer, lobe: val })} placeholder="Enter lobe name..." disabled=${feedback.show} />`
+                                        ? html`<div className="grid grid-cols-2 gap-2">
+                                            ${options.lobe.map(o => html`
+                                                <button onClick=${() => !feedback && setCurrentAnswer(v => ({...v, lobe: o}))} className=${`p-3 text-sm rounded-xl border-2 transition-all ${currentAnswer.lobe === o ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-50 bg-white text-slate-600'}`}>${o}</button>
+                                            `)}
+                                        </div>`
+                                        : html`<input value=${currentAnswer.lobe} onChange=${e => setCurrentAnswer(v => ({...v, lobe: e.target.value}))} className="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none" placeholder="..." />`
                                     }
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Specific Name</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3">Anatomical Name</label>
                                     ${quizMode === QuizMode.MULTIPLE_CHOICE 
-                                        ? html`<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            ${mcqOptions.name.map(opt => html`<${OptionButton} key=${opt} label=${opt} isSelected=${currentAnswer.name === opt} onClick=${() => setCurrentAnswer({ ...currentAnswer, name: opt })} disabled=${feedback.show} />`)}
-                                          </div>`
-                                        : html`<${TypeInput} value=${currentAnswer.name} onChange=${(val) => setCurrentAnswer({ ...currentAnswer, name: val })} placeholder="Enter specific anatomical name..." disabled=${feedback.show} />`
+                                        ? html`<div className="grid grid-cols-1 gap-2">
+                                            ${options.name.map(o => html`
+                                                <button onClick=${() => !feedback && setCurrentAnswer(v => ({...v, name: o}))} className=${`p-3 text-left text-sm rounded-xl border-2 transition-all ${currentAnswer.name === o ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-50 bg-white text-slate-600'}`}>${o}</button>
+                                            `)}
+                                        </div>`
+                                        : html`<input value=${currentAnswer.name} onChange=${e => setCurrentAnswer(v => ({...v, name: e.target.value}))} className="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none" placeholder="..." />`
                                     }
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Function(s)</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3">Functional Role</label>
                                     ${quizMode === QuizMode.MULTIPLE_CHOICE 
-                                        ? html`<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            ${mcqOptions.functions.map(opt => html`<${OptionButton} key=${opt} label=${opt} isSelected=${currentAnswer.functions === opt} onClick=${() => setCurrentAnswer({ ...currentAnswer, functions: opt })} disabled=${feedback.show} />`)}
-                                          </div>`
-                                        : html`<${TypeInput} value=${currentAnswer.functions} onChange=${(val) => setCurrentAnswer({ ...currentAnswer, functions: val })} placeholder="Describe the primary functions..." disabled=${feedback.show} />`
+                                        ? html`<div className="grid grid-cols-1 gap-2">
+                                            ${options.functions.map(o => html`
+                                                <button onClick=${() => !feedback && setCurrentAnswer(v => ({...v, functions: o}))} className=${`p-3 text-left text-sm rounded-xl border-2 transition-all ${currentAnswer.functions === o ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-50 bg-white text-slate-600'}`}>${o}</button>
+                                            `)}
+                                        </div>`
+                                        : html`<input value=${currentAnswer.functions} onChange=${e => setCurrentAnswer(v => ({...v, functions: e.target.value}))} className="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-indigo-500 outline-none" placeholder="..." />`
                                     }
                                 </div>
 
-                                <div className="pt-6 border-t border-slate-100 flex flex-col items-center gap-6">
-                                    ${!feedback.show ? html`
+                                <div className="pt-6 border-t">
+                                    ${!feedback ? html`
                                         <button 
-                                            onClick=${handleSubmit}
                                             disabled=${!currentAnswer.lobe || !currentAnswer.name || !currentAnswer.functions}
-                                            className="w-full max-w-sm py-4 rounded-2xl bg-indigo-600 text-white font-black text-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all disabled:opacity-30 disabled:cursor-not-allowed transform active:scale-95"
-                                        >
-                                            Submit Answer
-                                        </button>
+                                            onClick=${handleSubmit} 
+                                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold disabled:opacity-20"
+                                        >Submit Answer</button>
                                     ` : html`
-                                        <div className="w-full space-y-6">
-                                            <div className=${`p-8 rounded-2xl flex flex-col items-center gap-4 ${
-                                                feedback.result.lobeCorrect && feedback.result.nameCorrect && feedback.result.functionsCorrect
-                                                    ? 'bg-green-50 border-2 border-green-200 text-green-800'
-                                                    : 'bg-amber-50 border-2 border-amber-200 text-amber-800'
-                                            }`}>
-                                                <div className="flex gap-4">
-                                                    <${ResultIcon} isCorrect=${feedback.result.lobeCorrect} label="Lobe" />
-                                                    <${ResultIcon} isCorrect=${feedback.result.nameCorrect} label="Name" />
-                                                    <${ResultIcon} isCorrect=${feedback.result.functionsCorrect} label="Functions" />
+                                        <div className="space-y-4">
+                                            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-sm">
+                                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                                    <${StatusBadge} correct=${feedback.lobeCorrect} label="Lobe" />
+                                                    <${StatusBadge} correct=${feedback.nameCorrect} label="Name" />
+                                                    <${StatusBadge} correct=${feedback.functionsCorrect} label="Func" />
                                                 </div>
-                                                <div className="text-center mt-2">
-                                                    <p className="font-bold text-lg">
-                                                        ${feedback.result.lobeCorrect && feedback.result.nameCorrect && feedback.result.functionsCorrect
-                                                            ? 'Excellent! All correct.'
-                                                            : 'Partial Knowledge. Check below.'}
-                                                    </p>
-                                                    <div className="mt-4 text-left space-y-2 text-sm max-w-lg mx-auto">
-                                                        <p><strong>Correct Lobe:</strong> ${currentArea.lobe}</p>
-                                                        <p><strong>Correct Name:</strong> ${currentArea.name}</p>
-                                                        <p><strong>Correct Functions:</strong> ${currentArea.functions}</p>
-                                                    </div>
-                                                </div>
+                                                <p className="mb-1 text-slate-400 font-bold uppercase text-[9px]">Correction</p>
+                                                <p className="text-slate-800"><strong>${currentArea.lobe}</strong> • ${currentArea.name}</p>
+                                                <p className="text-slate-600 italic mt-1">${currentArea.functions}</p>
                                             </div>
-                                            <button 
-                                                onClick=${nextQuestion}
-                                                className="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold"
-                                            >
-                                                Next Question
-                                            </button>
+                                            <button onClick=${next} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold">Next Question</button>
                                         </div>
                                     `}
                                 </div>
